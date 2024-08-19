@@ -24,6 +24,7 @@ var (
 	debug             = kingpin.Flag("debug", "Enable debug mode. This disables forwarding to syslog").Default("false").Envar("DEBUG").Bool()
 	apiEndpoint       = kingpin.Flag("api-endpoint", "Api endpoint address. For bosh-lite installation of CF: https://api.10.244.0.34.xip.io").Envar("API_ENDPOINT").Required().String()
 	dopplerEndpoint   = kingpin.Flag("doppler-endpoint", "Overwrite default doppler endpoint return by /v2/info").Envar("DOPPLER_ENDPOINT").String()
+	postServer        = kingpin.Flag("http-post-url", "Syslog server.").Envar("POST_ENDPOINT").String()
 	syslogServer      = kingpin.Flag("syslog-server", "Syslog server.").Envar("SYSLOG_ENDPOINT").String()
 	syslogProtocol    = kingpin.Flag("syslog-protocol", "Syslog protocol (tcp/udp/tcp+tls).").Default("tcp").Envar("SYSLOG_PROTOCOL").String()
 	skipSSLSyslog     = kingpin.Flag("skip-ssl-validation-syslog", "Skip Ssl validation for syslog").Default("false").Envar("SKIP_SSL_VALIDATION_SYSLOG").Bool()
@@ -70,7 +71,6 @@ func (cli *CLI) Run(args []string) int {
 	kingpin.Parse()
 
 	//Setup Logging
-	loggingClient := logging.NewLogging(*syslogServer, *syslogProtocol, *logFormatterType, *certPath, *debug, *skipSSLSyslog)
 	logging.LogStd(fmt.Sprintf("Starting firehose-to-syslog %s ", version), true)
 	//
 	// if *modeProf != "" {
@@ -160,7 +160,7 @@ func (cli *CLI) Run(args []string) int {
 
 	//Creating Events
 	eventFilters := []eventRouting.EventFilter{eventRouting.HasIgnoreField, eventRouting.NotInCertainOrgs(*orgs)}
-	events := eventRouting.NewEventRouting(cachingClient, loggingClient, statistic, eventFilters)
+	events := eventRouting.NewEventRouting(cachingClient, statistic, eventFilters, *postServer)
 	err = events.SetupEventRouting(*wantedEvents)
 	if err != nil {
 		logging.LogError("Error setting up event routing: ", err)
@@ -175,13 +175,6 @@ func (cli *CLI) Run(args []string) int {
 		InsecureSSLSkipVerify:  *skipSSLValidation,
 		FirehoseSubscriptionID: *subscriptionId,
 		BufferSize:             *bufferSize,
-	}
-
-	if loggingClient.Connect() || *debug {
-		logging.LogStd("Connected to Syslog Server! Connecting to Firehose...", true)
-	} else {
-		logging.LogError("Failed connecting to the Syslog Server...Please check settings and try again!", "")
-		return ExitCodeError
 	}
 
 	uaa, err := uaago.NewClient(cfClient.Endpoint.AuthEndpoint)

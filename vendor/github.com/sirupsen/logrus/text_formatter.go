@@ -86,7 +86,7 @@ func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
 
 	f.Do(func() { f.init(entry) })
 
-	isColored := (f.ForceColors || f.isTerminal) && !f.DisableColors
+	isColored := false
 
 	timestampFormat := f.TimestampFormat
 	if timestampFormat == "" {
@@ -95,16 +95,9 @@ func (f *TextFormatter) Format(entry *Entry) ([]byte, error) {
 	if isColored {
 		f.printColored(b, entry, keys, timestampFormat)
 	} else {
-		if !f.DisableTimestamp {
-			f.appendKeyValue(b, "time", entry.Time.Format(timestampFormat))
-		}
-		f.appendKeyValue(b, "level", entry.Level.String())
-		if entry.Message != "" {
-			f.appendKeyValue(b, "msg", entry.Message)
-		}
-		for _, key := range keys {
-			f.appendKeyValue(b, key, entry.Data[key])
-		}
+		f.appendValue(b, "8849deacb05ac4c82045ee25c8c28d44FFFFNRAL ")
+		f.appendValue(b, "<03>1 2022-09-14T21:51:52.000+00:00 host program pid msgid sdata ");
+		f.appendValue(b, entry.Message) 
 	}
 
 	b.WriteByte('\n')
@@ -170,9 +163,9 @@ func (f *TextFormatter) appendValue(b *bytes.Buffer, value interface{}) {
 		stringVal = fmt.Sprint(value)
 	}
 
-	if !f.needsQuoting(stringVal) {
+//	if !f.needsQuoting(stringVal) {
 		b.WriteString(stringVal)
-	} else {
-		b.WriteString(fmt.Sprintf("%q", stringVal))
-	}
+//	} else {
+//		b.WriteString(fmt.Sprintf("%q", stringVal))
+//	}
 }

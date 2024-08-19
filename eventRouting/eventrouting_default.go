@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+    	"net/http"
+    	"encoding/json"
+	"bytes"
 
 	"github.com/cloudfoundry-community/firehose-to-syslog/caching"
 	fevents "github.com/cloudfoundry-community/firehose-to-syslog/events"
@@ -17,19 +20,19 @@ type EventRoutingDefault struct {
 	CachingClient  caching.Caching
 	selectedEvents map[string]bool
 	Stats          *stats.Stats
-	log            logging.Logging
 	ExtraFields    map[string]string
 	eventFilters   []EventFilter
+	postURL		string
 }
 
-func NewEventRouting(caching caching.Caching, logging logging.Logging, stats *stats.Stats, filters []EventFilter) EventRouting {
+func NewEventRouting(caching caching.Caching, stats *stats.Stats, filters []EventFilter, postServer string) EventRouting {
 	return &EventRoutingDefault{
 		CachingClient:  caching,
 		selectedEvents: make(map[string]bool),
-		log:            logging,
 		Stats:          stats,
 		ExtraFields:    make(map[string]string),
 		eventFilters:   filters,
+                postURL:	postServer,
 	}
 }
 
@@ -75,7 +78,20 @@ func (e *EventRoutingDefault) RouteEvent(msg *events.Envelope) {
 		}
 	}
 
-	e.log.ShipEvents(event.Fields, event.Msg)
+	values := make(map[string]string)
+	for k, v := range event.Fields {
+		values[k] = fmt.Sprintf("%s",v)
+	}
+	values["message"]=event.Msg
+
+    	json_data, err := json.Marshal(values)
+
+	http.Post(e.postURL, "application/json", bytes.NewBuffer(json_data))
+
+    	if err != nil {
+        	logging.LogStd(fmt.Sprintf("%s",err), true)
+    	}
+
 	e.Stats.Inc(stats.Publish)
 
 }
@@ -95,6 +111,10 @@ func (e *EventRoutingDefault) SetupEventRouting(wantedEvents string) error {
 		}
 	}
 	return nil
+}
+
+func (e *EventRoutingDefault) SetPostUrl(postURL string) {
+	e.postURL = postURL
 }
 
 func (e *EventRoutingDefault) SetExtraFields(extraEventsString string) {

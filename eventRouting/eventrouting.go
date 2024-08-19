@@ -12,6 +12,7 @@ type EventRouting interface {
 	RouteEvent(msg *events.Envelope)
 	SetupEventRouting(wantedEvents string) error
 	SetExtraFields(extraEventsString string)
+	SetPostUrl(postURL string)
 }
 
 func IsAuthorizedEvent(wantedEvent string) bool {

@@ -2,17 +2,16 @@ applications:
 - name: firehose-to-syslog
   health-check-type: process
   env:
-    GOPACKAGENAME: github.com/cloudfoundry-community/firehose-to-syslog
-    API_ENDPOINT: https://api.bosh-lite.com
-    DEBUG: false
-    DOPPLER_ENDPOINT: wss://doppler.bosh-lite.com:443
-    EVENTS: LogMessage,ValueMetric,Error,ContainerMetric
-    FIREHOSE_CLIENT_ID: admin
-    FIREHOSE_CLIENT_SECRET: admin
+    API_ENDPOINT: https://api.system.dev.cf.demandbridge.io
+    DOPPLER_ENDPOINT: wss://doppler.system.dev.cf.demandbridge.io:443
+    FIREHOSE_CLIENT_ID: firehose-to-syslog
+    FIREHOSE_CLIENT_SECRET: 8nGOMVpQVPFhnmOVBN9Sh8DWzIMX6XiW15zEnEEmavkscr9SysiLDAgXO34Km9q #prod
+#    FIREHOSE_CLIENT_SECRET: c3t6L3JCJlJmbHZDLCA0TEtyaTcqO2V6VEBCNXF6N18taDhZMVJ4VkFuIzVeS341 #dev
     FIREHOSE_SUBSCRIPTION_ID: firehose-a
+    GOPACKAGENAME: github.com/cloudfoundry-community/firehose-to-syslog
+    LOGS_BUFFER_SIZE: 160000
     LOG_EVENT_TOTALS: true
     LOG_EVENT_TOTALS_TIME: 10s
+    LOG_FORMATTER_TYPE: text
+    POST_ENDPOINT: https://log-api.newrelic.com/log/v1?Api-Key=15f3471227b88392b135229fdf0b6a60FFFFNRAL
     SKIP_SSL_VALIDATION: true
-    SYSLOG_ENDPOINT: 10.0.0.218:5514
-    SYSLOG_PROTOCOL: tcp+tls  # tcp/udp/tcp+tls
-    CERT_PEM: cert.pem  # $ curl https://download.yourlogprovider.tld/their.crt > cert.pem
